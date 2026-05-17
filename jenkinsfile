@@ -1,45 +1,31 @@
-pipeline {
-    agent { label 'Frontend' }
-
+pipeline{
+    agent { label 'Frontend'}
     environment {
-        APP_SERVER = "172.31.42.10"
+        APP_SERVER = "172.31.37.108" 
         DEPLOY_DIR = "/var/www/html"
     }
-
-    stages {
-
-        stage('Install Dependencies') {
-            steps {
+    stages{
+        stage('Pre Build Actions'){
+            steps{
                 sh 'npm install'
+                
             }
         }
-
-        stage('Build') {
-            steps {
+        stage('Build'){
+            steps{
                 sh 'npm run build'
             }
         }
-
-        stage('Deploy') {
-            steps {
+        stage('Post Build Actions'){
+            steps{
                 sh """
+                echo 'clening old files on app server'
+                ssh jenkins@${APP_SERVER} 'rm -rf ${DEPLOY_DIR}/*'
+                echo 'copying frontend build'
+                scp -r dist/* jenkins@${APP_SERVER}:${DEPLOY_DIR}/
+                echo 'Restarting nginx'
+                ssh jenkins@${APP_SERVER} 'sudo systemctl restart nginx'
 
-                ssh-keyscan -H ${APP_SERVER} >> ~/.ssh/known_hosts
-
-                ssh jenkins@${APP_SERVER} "mkdir -p /tmp/frontend"
-
-                scp -r dist/* jenkins@${APP_SERVER}:/tmp/frontend/
-
-                ssh jenkins@${APP_SERVER} "
-
-                    sudo rm -rf ${DEPLOY_DIR}/*
-
-                    sudo cp -r /tmp/frontend/* ${DEPLOY_DIR}/
-
-                    sudo systemctl restart nginx
-
-                    rm -rf /tmp/frontend/*
-                "
 
                 """
             }
