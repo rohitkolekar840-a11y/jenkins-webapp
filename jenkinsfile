@@ -1,7 +1,7 @@
 pipeline{
     agent { label 'Frontend'}
     environment {
-        APP_SERVER = "172.31.42.10"
+        APP_SERVER = " 172.31.42.10 "
         DEPLOY_DIR = "/var/www/html"
     }
     stages{
@@ -25,10 +25,6 @@ pipeline{
                 scp -r dist/* jenkins@${APP_SERVER}:${DEPLOY_DIR}/
                 echo 'Restarting nginx'
                 ssh jenkins@${APP_SERVER} 'sudo systemctl restart nginx'
-                sh '''
-                ssh-keyscan -H 172.31.42.10 >> ~/.ssh/known_hosts
-                ssh jenkins@172.31.42.10 "rm -rf /var/www/html/*"
-                '''
 
 
                 """
