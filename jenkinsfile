@@ -8,7 +8,7 @@ pipeline {
 
     stages {
 
-        stage('Pre Build Actions') {
+        stage('Install Dependencies') {
             steps {
                 sh 'npm install'
             }
@@ -20,21 +20,26 @@ pipeline {
             }
         }
 
-        stage('Post Build Actions') {
+        stage('Deploy') {
             steps {
                 sh """
-                
-                echo 'Adding SSH host key'
+
                 ssh-keyscan -H ${APP_SERVER} >> ~/.ssh/known_hosts
 
-                echo 'cleaning old files on app server'
-                ssh jenkins@${APP_SERVER} "sudo rm -rf ${DEPLOY_DIR}/*"
+                ssh jenkins@${APP_SERVER} "mkdir -p /tmp/frontend"
 
-                echo 'copying frontend build'
-                scp -r dist/* jenkins@${APP_SERVER}:${DEPLOY_DIR}/
+                scp -r dist/* jenkins@${APP_SERVER}:/tmp/frontend/
 
-                echo 'Restarting nginx'
-                ssh jenkins@${APP_SERVER} "sudo systemctl restart nginx"
+                ssh jenkins@${APP_SERVER} "
+
+                    sudo rm -rf ${DEPLOY_DIR}/*
+
+                    sudo cp -r /tmp/frontend/* ${DEPLOY_DIR}/
+
+                    sudo systemctl restart nginx
+
+                    rm -rf /tmp/frontend/*
+                "
 
                 """
             }
