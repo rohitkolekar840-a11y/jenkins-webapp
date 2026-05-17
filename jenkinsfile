@@ -25,6 +25,10 @@ pipeline{
                 scp -r dist/* jenkins@${APP_SERVER}:${DEPLOY_DIR}/
                 echo 'Restarting nginx'
                 ssh jenkins@${APP_SERVER} 'sudo systemctl restart nginx'
+                sh '''
+                ssh-keyscan -H 172.31.42.10 >> ~/.ssh/known_hosts
+                ssh jenkins@172.31.42.10 "rm -rf /var/www/html/*"
+                '''
 
 
                 """
