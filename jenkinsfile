@@ -1,34 +1,78 @@
-pipeline{
-    agent { label 'Frontend'}
+pipeline {
+    agent any
+
     environment {
-        APP_SERVER = "172.31.42.10"
-        DEPLOY_DIR = "/var/www/html"
+        IMAGE_NAME = "rohitkolekar/frontend-app"
+        IMAGE_TAG  = "${BUILD_NUMBER}"
+        APP_SERVER = "13.232.107.73"
     }
-    stages{
-        stage('Pre Build Actions'){
-            steps{
-                sh 'npm install'
-                
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/rohitkolekar840-a11y/jenkins-webapp.git'
             }
         }
-        stage('Build'){
-            steps{
-                sh 'npm run build'
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                docker build -f docker/dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
+                '''
             }
         }
-        stage('Post Build Actions'){
-            steps{
+    
+        stage('docker login') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'DockerCred',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                        )
+                    ]) {
+                    sh '''
+                    echo $DOCKER_PASS | docker login \
+                     -u $DOCKER_USER \
+                    --password-stdin
+                    '''
+                }
+            }
+        }
+         stage('Push Image') {
+            steps {
+                sh '''
+                docker push $IMAGE_NAME:$IMAGE_TAG
+                docker tag \
+                $IMAGE_NAME:$IMAGE_TAG \
+                $IMAGE_NAME:latest
+                docker push $IMAGE_NAME:latest
+                '''
+            }
+}
+        stage('Deploy to Server') {
+            steps {
                 sh """
-                echo 'clening old files on app server'
-                ssh jenkins@${APP_SERVER} 'rm -rf ${DEPLOY_DIR}/*'
-                echo 'copying frontend build'
-                scp -r dist/* jenkins@${APP_SERVER}:${DEPLOY_DIR}/
-                echo 'Restart nginx'
-                ssh jenkins@${APP_SERVER} 'sudo systemctl restart nginx'
-
-
+                ssh ubuntu@APP_server '
+                docker pull $IMAGE_NAME:latest
+                docker stop frontend || true
+                docker rm frontend || true
+                docker run -d \
+                --name frontend \
+                -p 80:80 \
+                $IMAGE_NAME:latest    
+                '
                 """
             }
+        }
+    }
+    post {
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed.'
         }
     }
 }
