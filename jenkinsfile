@@ -1,15 +1,15 @@
 pipeline {
     agent any
     environment {
-        IMAGE_NAME = "gopalsharma2504/frontend"
+        IMAGE_NAME = "rohitkolekar/frontend"
         IMAGE_TAG  = "${BUILD_NUMBER}"
-        APP_SERVER = "43.204.111.98"
+        APP_SERVER = "13.232.107.73"
     }
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/gopalkamalsharma/Jenkins-WebApp.git'
+                url: 'https://github.com/rohitkolekar840-a11y/jenkins-webapp.git'
             }
         }
         stage('Build Docker Image') {
