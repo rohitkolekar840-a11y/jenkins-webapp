@@ -1,22 +1,12 @@
-FROM node:24.15 AS builder
-
+FROM node:24 AS builder
 WORKDIR /app
-
-run cd .,
-
+RUN cd ..
 COPY package*.json ./
-
-RUN npm install 
-
-COPY  . .
-
+RUN npm install
+COPY . .
 RUN npm run build
 
 FROM nginx
-
-COPY --from=builder /app/dist/ usr/share/nginx/html
-
+COPY --from=builder /app/dist /usr/share/nginx/html
 EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"] 
-# should be written only one in file
+CMD ["nginx", "-g", "daemon off;"]
