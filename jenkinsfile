@@ -1,74 +1,14 @@
-pipeline {
+pipeline{
     agent any
-    environment {
-        IMAGE_NAME = "rohitkolekar/frontend"
-        IMAGE_TAG  = "${BUILD_NUMBER}"
-        APP_SERVER = "13.232.107.73"
-    }
-    stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main',
-                url: 'https://github.com/rohitkolekar840-a11y/jenkins-webapp.git'
-            }
-        }
-        stage('Build Docker Image') {
-            steps {
-                sh '''
-                docker build -f docker/dockerfile -t $IMAGE_NAME:$IMAGE_TAG .
-                '''
-            }
-        }
-        stage('Docker Login') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'DockerCred',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    sh '''
-                    echo $DOCKER_PASS | docker login \
-                    -u $DOCKER_USER \
-                    --password-stdin
-                    '''
-                }
-            }
-        }
-        stage('Push Image') {
-            steps {
-                sh '''
-                docker push $IMAGE_NAME:$IMAGE_TAG
-                docker tag \
-                $IMAGE_NAME:$IMAGE_TAG \
-                $IMAGE_NAME:latest
-                docker push $IMAGE_NAME:latest
-                '''
-            }
-        }
-        stage('Deploy To App Server') {
-            steps {
-                sh """
-                ssh ubuntu@$APP_SERVER '
-                docker pull $IMAGE_NAME:latest
-                docker stop frontend || true
-                docker rm frontend || true
-                docker run -d \
-                --name frontend \
-                -p 80:80 \
-                $IMAGE_NAME:latest
-                '
-                """
-            }
-        }
-    }
-    post {
-        success {
-            echo "Deployment Successful"
-        }
-        failure {
-            echo "Deployment Failed"
+    stages{'deployment'{
+        steps{
+           ssh ubuntu@13.203.201.251 '''
+           copy docker-compose.yml /home/ubuntu/docker-compose.yml
+           docker-compose -f /home/ubuntu/docker-compose.yml down
+           docker-compose -f /home/ubuntu/docker-compose.yml up -d
+           '''
+             }
+
         }
     }
 }
