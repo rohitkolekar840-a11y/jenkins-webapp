@@ -5,9 +5,9 @@ pipeline {
         stage('Deployment') {
             steps {
                 sh '''
-scp -o StrictHostKeyChecking=no docker-compose.yaml ubuntu@13.203.201.251:/home/ubuntu/
-
-ssh -o StrictHostKeyChecking=no ubuntu@13.203.201.251 << EOF
+scp -o StrictHostKeyChecking=no docker-compose.yaml ubuntu@3.108.55.236:/home/ubuntu/
+    
+ssh -o StrictHostKeyChecking=no ubuntu@3.108.55.236 << EOF
 cd /home/ubuntu
 docker-compose down
 docker-compose up -d
