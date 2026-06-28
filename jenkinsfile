@@ -4,7 +4,7 @@ pipeline{
         AWS_REGION = 'ap-south-1'
         ACCOUNT_ID = '463605761106'
         REPOSITORY = 'frontend'
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE_TAG = '${BUILD_NUMBER}'
         ECR_URI = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPOSITORY}:${IMAGE_TAG}"
         ACCESS_KEY_ID = credentials('aws-access-key-id')
         SECRET_ACCESS_KEY = credentials('aws-secret-access-key') 
